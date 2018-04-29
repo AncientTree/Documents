@@ -12,7 +12,7 @@
     `$ git config --global user.email "your email"`：配置email
 
 ## 从GitHub克隆仓库到本地
-1. 到GitHub的某个仓库，然后复制右边的那个（HTTPS clone url）
+1. 到GitHub的某个仓库，然后复制右边的那个（HTTPS clone url）。**使用HTTPS URL与使用SSH URL的区别在于将来`$ git push`时是否要输入Github账号密码。**
 2.  `$ git clone <URL> <path>`回到要存放的目录下，使用命令，`<URL>`是你要克隆的GitHub项目URL，`path`是你要放这个repo的目录，不输入的话默认终端所在目录。
 3. 要更新你的本地仓库至最新改动，执行：`$ git pull`
 
@@ -23,3 +23,4 @@
 - `$ git commit -m "<代码提交信息>"`：这是 git 基本工作流程的第一步；使用此命令以实际提交改动。现在，你的改动已经提交到了 HEAD，但是还没到你的远端仓库。如果某文件修改后没有`$ git add <file name>`，则此文件不会被Commit。
 - `$ git commit -a -m '<代码提交信息>'`：加入`-a`选项可以跳过add步骤而直接把所有已被改动的跟踪中的文件提交。
 - `$ gitk`可以打开git内建的GUI，对新手来说更加友好和直观的操作。
+
