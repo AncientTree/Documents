@@ -2,4 +2,5 @@
 .vscode/launch.json
 .vscode/settings.json
 *.pdf
-文档/ErrorExecution failed for task 'apppreDebugAndroidTestBuild'.md
+文档/MD Simulation.md
+*.html
