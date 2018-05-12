@@ -5,7 +5,7 @@
 ###  1.1 $\boldsymbol{^\triangle}$获取roughpolymer.pdb(原始粗糙的pdb文件)
 - 在Material Studio中画出聚合物分子，导出**roughpolymer.pdb**文件。**注意头尾：头部结构单元CA有HA1，尾部CY有HY1。**
 - 改残基名。对于f5均聚物，残基命名为头部、中间、尾部结构单元分别为DDR、DDS、DDT。
-    
+  
 $\boldsymbol{^\triangle}$ *表示有些情况可能并非必须步骤。*
 
 ###  1.2 $\boldsymbol{^\triangle}$roughpolymer.pdb转换成polymer.gro
@@ -14,17 +14,41 @@ $ pdb2gmx -f polymer.pdb -o polymer.gro -p polymer.top
     > Force Field: 8 Charmm27
     > Water Model: 7 None
 ```
-即得到**polymer.gro**、**polymer.top**两个文件，其中gro需要做得与x轴平行，top文件需要改动成itp文件供后面top文件#include。下述
+
+这一步可能报错：
+
+`Atom HN in residue DDS 14 was not found in rtp entry DDS with 51 atom while sorting atoms`
+
+这是因为pdb文件里面的原子名没有改好，如上例中，有一个氢命名是力场文件中没有的，所以要改pdb。
+
+也可能因为DDS DDT写混了。
+
+即得到**polymer.gro**、**polymer.top**两个文件，~~其中gro需要做得与x轴平行，top文件需要改动成itp文件供后面top文件#include。下述~~，都没用。
 
 
 ### 1.3 $\boldsymbol{^\triangle}$polymer.gro改到与x轴平行
-- *PASS*
-得到**refined_polymer.gro**
+- `make_ndx -f polymer.gro -o paral.ndx`
+
+  `editconf -f polymer.gro -o refined_polymer.gro -princ -n paral.ndx`
+
+  得到**refined_polymer.gro**
+
 - `$ editconf -f refined_polymer.gro -o refined_polymer.pdb`
-得到**refined_polymer.pdb**
+  得到**refined_polymer.pdb**
+
+  ​
+
+- $\boldsymbol{\bigstar}\boldsymbol{\bigstar}\boldsymbol{\bigstar}\boldsymbol{\bigstar}\boldsymbol{\bigstar}$**用这个pdb再得到top与gro**$\boldsymbol{\bigstar}\boldsymbol{\bigstar}\boldsymbol{\bigstar}\boldsymbol{\bigstar}\boldsymbol{\bigstar}$
+
+  ```shell
+  $ pdb2gmx -f refined_polymer.pdb -o polymer.gro -p polymer.top
+      > Force Field: 8 Charmm27
+      > Water Model: 7 None
+  ```
 
 ### 1.4 polymer.top改为polymer.itp、将polymer.itp加入（include）到graphene.top
 - **polymer.top**打开，[ bonds ]、[ angles ]、[ dihedrals ]里面的各种常数依据**124-order.itp**文件改。**这一步可能反复出错，根据报错中声明缺少参数的行数来改。是最~~恶心~~繁复耗时的步骤。**
+
 - 删除以下两个部分，分别在头部和尾部
     ```
     ; Include forcefield parameters
@@ -38,22 +62,32 @@ $ pdb2gmx -f polymer.pdb -o polymer.gro -p polymer.top
     ; Compound        #mols
     Other               1
     ```
+
+- 修改以下部分：
+
+    ```
+    [ moleculetype ]
+    ; Name           nrexcl
+    XXX                3
+    ```
+
 - **polymer.top**改名为**polymer.itp**
+
 - 在**graphene.top**文件中加一句`#include polymer.itp`，也可能是把里面别的itp文件名改成**polymer.itp**。
 
 
 ### 1.5 修改pack.in文件、坐标文件打包、建盒子、修改complex.pdb的残基序号
 - `$ packmol < pack.in`包含石墨烯（**graphene.pdb**）+改良的聚合物pdb文件   （**refined_polymer.pdb**），**pack.in**文件中的距离单位为$\mathring{A}$。
     得到**complex.pdb**
+- 修改**complex.pdb**的残基序号。1UNK保留不动；1DDR-nDDS-28DDT改为2DDR-nDDS-29DDT。
 
 
- 
+
 - 建盒子
     ```shell
     $ editconf -f complex.pdb -o complex.gro -c -box <X> <Y> <Z> # 其中XYZ的单位是nm。
     ```
-    
-- 修改**complex.pdb**的残基序号。1UNK保留不动；1DDR-nDDS-28DDT改为2DDR-nDDS-29DDT。
+
 
 
 ### 1.6 索引、固定、改posre.itp的力常数
@@ -73,13 +107,13 @@ $ pdb2gmx -f polymer.pdb -o polymer.gro -p polymer.top
 至此我们得到了以下文件
 
 |   文件    |   来源    |   备注    |
-| - | - | - |
-|   complex.gro  |  1.5 节 `editconf`
-|   em1.mdp & npt1.mdp & nvt1.mdp   |   某处复制得来
-|   graphene.top    |   1.4 节  |   要加上include polymer.itp
-|   new.ndx   |     1.6 节 `make_ndx`   |
-|   posre.itp   |   1.6 节`posre`   |   要加入到graphene.top中
-|   polymer.itp |   1.4 节 删除、改名   |   要加入到graphene.top中
+| ---- | ---- | --- |
+|   complex.gro  |  1.5 节 `editconf`||
+|   em1.mdp & npt1.mdp & nvt1.mdp   |   某处复制得来||
+|   graphene.top    |   1.4 节  |   要加上include polymer.itp|
+|   new.ndx   |     1.6 节 `make_ndx`   ||
+|   posre.itp   |   1.6 节 `posre`   |   要加入到graphene.top中|
+|   polymer.itp |   1.4 节 删除、改名   |   要加入到graphene.top中|
 
 ## 2. EM(能量最小化)
 - 打包
@@ -110,7 +144,7 @@ tc-grps             = UNK WDA   ;2 coupling group
     ```shell
     grompp -v -c emXX.gro -f npt1.mdp -o nptYY-emXX.tar -p graphene.top -n new.ndx 
     ```
-  **nptYY-emXX.tar**表示em第XX次跑完的结果用来跑的第YY次npt。
+    **nptYY-emXX.tar**表示em第XX次跑完的结果用来跑的第YY次npt。
 - 运行 
     ```shell
     mdrun -v -s nptYY-emXX.tar -deffnm nptYY-emXX
@@ -119,3 +153,32 @@ tc-grps             = UNK WDA   ;2 coupling group
 ## 4. NVT(正则系综)
 [分子动力学模拟简介--知乎用户@yang元祐](https://zhuanlan.zhihu.com/p/26103312)：
 >  正则系综（canonical ensemble），NVT，正则系综是蒙特卡罗方法模拟处理的典型代表。假定N个粒子处在体积为V的盒子内，将其置于温度恒为T的巨大热库中。此时，总能量（E）和系统压强（P）可能在某一平均值附近起伏变化。平衡体系为封闭系统，与大热源热接触，能量交换达到热平衡，温度相等，热库足够大，温度确定。特征函数是亥姆霍兹自由能F（N,V,T）。
+
+- 复制文件到服务器去：
+
+  ```shell
+  scp complex.gro nvt1.mdp graphene.top new.ndx posre.itp polymer.itp test@218.199.176.139:~/simulation/peng/f5-14
+  	> password:
+  ```
+
+  登录服务器：
+
+
+- ```shell
+  ssh test@218.199.176.139
+  	> password: 
+  ```
+
+  修改**gromacs_nvt1.pbs**文件
+
+- 提交运行：
+
+  `qsub gromacs_nvt1.pbs`
+
+- 查看当前运行状态：
+
+  `qstat -nal`
+
+- 查看日志尾部、剩余时间等：
+
+  `tail -f 1.log`
